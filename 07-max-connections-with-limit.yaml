@@ -13,6 +13,8 @@ spec:
       creationTimestamp: null
       labels:
         app: nginx
+      annotations:
+        qos.projectcalico.org/ingressMaxConnections: "3"
     spec:
       affinity:
         nodeAffinity:
@@ -62,8 +64,6 @@ spec:
     metadata:
       labels:
         app: netshoot
-      annotations:
-        qos.projectcalico.org/egressMaxConnections: "4"
     spec:
       tolerations:
       - key: node-role.kubernetes.io/control-plane
@@ -74,5 +74,13 @@ spec:
           image: nicolaka/netshoot
           command: ['/bin/sh', '-c', 'sleep infinity']
           # To benchmark manually:
-          # kubectl exec netshoot-jlfxq -- /bin/sh -c 'nc nginx 80' # (for a "persistent" connection)
-          # kubectl exec netshoot-jlfxq -- /bin/sh -c 'curl nginx'
+          # kubectl exec deploy/netshoot -- /bin/sh -c 'nc nginx 80' # (for a "persistent" connection)
+          # kubectl exec deploy/netshoot -- /bin/sh -c 'curl nginx'
+          readinessProbe:
+            exec:
+              command: [ "curl", "nginx" ]
+            failureThreshold: 1
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            successThreshold: 1
+            timeoutSeconds: 1
